@@ -26,7 +26,7 @@ rating REAL
 
 def api_call(movie_name):
     endpoint = "http://www.omdbapi.com/?"
-    params = urllib.parse.urlencode({ "t" : movie_name, "apikey" : secrets.api_key_1 })
+    params = urllib.parse.urlencode({ "t" : movie_name, "apikey" : secrets.api_key_2 })
     url = endpoint + params
     try:
         with urllib.request.urlopen(url, context=ctx) as url_obj:
@@ -50,7 +50,7 @@ def api_call(movie_name):
             except:
                 r_rating = None
             try:
-                m_rating = eval(metacritic)
+                m_rating = eval(metacritic) * 10
             except:
                 m_rating = None
 
@@ -77,13 +77,20 @@ def api_call(movie_name):
 cur.execute('''SELECT movie_id, title FROM movies WHERE selection is NULL ORDER BY RANDOM()''')
 rows = cur.fetchall()
 
+total_items_done = 0
+count = 0
 while True:
     num = input("Enter the no. of movies(greater than 10): ")
     if len(num) == 0:
         break
     num_items = int(num)
-    count = 0
-    for item in rows[ : num_items]:
+    total_items_done += num_items
+    if count == 0:
+        start_pos = 0
+    else:
+        start_pos = end_pos
+    end_pos = total_items_done
+    for item in rows[ start_pos : end_pos]:
         try:
             movie_title = item[1]
             movie_id = item[0]
@@ -106,7 +113,7 @@ while True:
             cur_1.execute('''INSERT OR IGNORE INTO movies_rank (title, genre, rating) VALUES(?, ?, ?)''',(title, genre, rating))
             cur.execute('''UPDATE movies SET selection = ? WHERE movie_id = ?''',(1, movie_id))
             count += 1
-            if count % 5 == 0:
+            if count % 10 == 0:
                 conn_1.commit()
                 conn.commit()
             print(count)
